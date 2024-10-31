@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asana Dashboard</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header>
+    <h1>Daily Tasks</h1>
+  </header>
+  <main>
+    <% const { overdue, thisWeek, upcoming, noDueDate } = tasks; %>
+
+    <!-- Overdue Tasks Section -->
+    <% if (overdue && overdue.length > 0) { %>
+      <section>
+        <h2>Overdue</h2>
+        <div class="task-container" id="overdue">
+          <% overdue.forEach(task => { %>
+            <div class="task-card">
+              <h3>
+                <a href="https://app.asana.com/0/<%= process.env.PROJECT_ID %>/<%= task.gid %>" target="_blank">
+                  <%= task.name %>
+                </a>
+              </h3>
+              <p>
+                <span class="overdue"><%= new Date(task.due_on).toLocaleDateString() %></span> |
+                <%= task.memberships?.[0]?.section?.name || 'No Section' %>
+              </p>
+            </div>
+          <% }) %>
+        </div>
+      </section>
+    <% } %>
+
+    <!-- This Week's Tasks Section -->
+    <% if (thisWeek && thisWeek.length > 0) { %>
+      <section>
+        <h2>This Week</h2>
+        <div class="task-container" id="thisWeek">
+          <% thisWeek.forEach(task => { %>
+            <div class="task-card">
+              <h3>
+                <a href="https://app.asana.com/0/<%= process.env.PROJECT_ID %>/<%= task.gid %>" target="_blank">
+                  <%= task.name %>
+                </a>
+              </h3>
+              <p>
+                <%= new Date(task.due_on).toLocaleDateString() %> |
+                <%= task.memberships?.[0]?.section?.name || 'No Section' %>
+              </p>
+            </div>
+          <% }) %>
+        </div>
+      </section>
+    <% } %>
+
+    <!-- Upcoming Tasks Section -->
+    <% if (upcoming && upcoming.length > 0) { %>
+      <section>
+        <h2>Upcoming</h2>
+        <div class="task-container">
+          <% upcoming.forEach(task => { %>
+            <div class="task-card">
+              <h3>
+                <a href="https://app.asana.com/0/<%= process.env.PROJECT_ID %>/<%= task.gid %>" target="_blank">
+                  <%= task.name %>
+                </a>
+              </h3>
+              <p>
+                <%= new Date(task.due_on).toLocaleDateString() %> |
+                <%= task.memberships?.[0]?.section?.name || 'No Section' %>
+              </p>
+            </div>
+          <% }) %>
+        </div>
+      </section>
+    <% } %>
+
+    <!-- No Due Date Tasks Section -->
+    <% if (noDueDate && noDueDate.length > 0) { %>
+      <section>
+        <h2>No Due Date</h2>
+        <div class="task-container">
+          <% noDueDate.forEach(task => { %>
+            <div class="task-card">
+              <h3>
+                <a href="https://app.asana.com/0/<%= process.env.PROJECT_ID %>/<%= task.gid %>" target="_blank">
+                  <%= task.name %>
+                </a>
+              </h3>
+              <p>
+                <%= task.memberships?.[0]?.section?.name || 'No Section' %>
+              </p>
+            </div>
+          <% }) %>
+        </div>
+      </section>
+    <% } %>
+  </main>
+</body>
+</html>

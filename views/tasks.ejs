@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asana Tasks</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header>
+    <h1>Asana Tasks</h1>
+    <a href="/" class="button">Back to Home</a>
+  </header>
+  <main>
+    <% if (tasks && tasks.length > 0) { %>
+      <ul class="task-list">
+        <% tasks.forEach(task => { %>
+          <li class="task-item">
+            <h3><%= task.name %></h3>
+            <p>Task ID: <%= task.gid %></p>
+          </li>
+        <% }) %>
+      </ul>
+    <% } else { %>
+      <p>No tasks found.</p>
+    <% } %>
+  </main>
+</body>
+</html>

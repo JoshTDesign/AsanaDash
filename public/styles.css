@@ -1,0 +1,71 @@
+body {
+    font-family: 'quasimoda thin', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f6f6f8;
+  }
+  
+  header {
+    background-color: #fff;
+    color: white;
+    padding: 1em;
+    text-align: center;
+    height: 150px;
+  }
+  
+  main {
+    padding: 1em; /* Reduced padding for a tighter layout */
+    width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  h2 {
+    color: #333;
+    font-size: 1.2em; /* Slightly smaller font for the header */
+    margin-bottom: 0.5em;
+  }
+  
+  /* Stack layout for tasks */
+  .task-container {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .overdue {
+    color: red; /* Red text for overdue tasks */
+  }
+
+  .task-card {
+    padding: 15px 15px 15px 15px; /* Minimal padding for a tight look */
+    width: 100%;
+    border-top: 1px #e1e1e1 solid;
+    border-right: 1px #e1e1e1 solid;
+    background-color: white;
+  }
+  
+  .task-card h3 {
+    margin: 0;
+    font-size: 1em; /* Smaller font size for task name */
+    font-weight: bolder;
+  }
+  
+  .task-card p {
+    margin: 0.25em 0 0; /* Tight margin for the due date */
+    font-size: 0.85em; /* Smaller font size for due date */
+    color: #666;
+  }
+
+  section {
+    margin-bottom 50px;
+  }
+
+  #overdue {
+    border-radius: 5px;
+    border-left: 5px rgb(195, 69, 69) solid;
+  }
+
+  #ThisWeek {
+    border-radius: 5px;
+    border-left: 5px rgb(119, 163, 191) solid;
+  }
