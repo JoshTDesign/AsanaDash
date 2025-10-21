@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Productivity Dashboard</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header>
+    <h1>Productivity Dashboard</h1>
+  </header>
+  <main>
+    <section>
+      <h2>Projects</h2>
+      <div class="project-container">
+        <% if (projects && projects.length > 0) { %>
+          <% projects.forEach(project => { %>
+            <div class="project-card">
+              <h3><%= project.name %></h3>
+              <p>Average Lead Time: <%= project.avgLeadTime.toFixed(2) %> days</p>
+            </div>
+          <% }) %>
+        <% } else { %>
+          <p>No projects found.</p>
+        <% } %>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
