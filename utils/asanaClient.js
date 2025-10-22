@@ -1,43 +1,50 @@
 require('dotenv').config();
-const asana = require('asana');
+const Asana = require('asana');
 
-const client = asana.Client.create().useAccessToken(process.env.ASANA_API_KEY);
+// Configure client with personal access token
+const client = Asana.ApiClient.instance;
+const token = client.authentications['token'];
+token.accessToken = process.env.ASANA_API_KEY;
+
+// Initialize API clients for various resources
+const workspacesApiInstance = new Asana.WorkspacesApi();
+const projectsApiInstance = new Asana.ProjectsApi();
+const tasksApiInstance = new Asana.TasksApi();
 
 const getWorkspaces = async () => {
     try {
-        const workspaces = await client.workspaces.getWorkspaces();
-        return workspaces.data;
+        const result = await workspacesApiInstance.getWorkspaces({});
+        return result.data;
     } catch (error) {
-        console.error('Error fetching workspaces:', error.value ? error.value.errors : error);
+        console.error('Error fetching workspaces:', error.response ? error.response.body : error);
         throw error;
     }
 };
 
 const getProjects = async (workspaceGid) => {
     try {
-        const projects = await client.projects.getProjects({
+        const result = await projectsApiInstance.getProjects({
             workspace: workspaceGid,
             opt_fields: 'gid,name'
         });
-        return projects.data;
+        return result.data;
     } catch (error) {
-        console.error('Error fetching projects:', error.value ? error.value.errors : error);
+        console.error('Error fetching projects:', error.response ? error.response.body : error);
         throw error;
     }
 };
 
 const getProject = async (projectGid) => {
     try {
-        const project = await client.projects.getProject(projectGid, {
+        const result = await projectsApiInstance.getProject(projectGid, {
             opt_fields: 'gid,name'
         });
-        return project;
+        return result.data;
     } catch (error) {
-        console.error('Error fetching project:', error.value ? error.value.errors : error);
+        console.error('Error fetching project:', error.response ? error.response.body : error);
         throw error;
     }
 };
-
 
 const getCompletedTasksForProject = async (workspaceGid, projectGid, days) => {
     const completedSince = new Date();
@@ -46,11 +53,13 @@ const getCompletedTasksForProject = async (workspaceGid, projectGid, days) => {
     try {
         let allTasks = [];
         let offset = null;
+        const limit = 100; // Max limit per page
 
         do {
             const params = {
                 project: projectGid,
                 completed_since: completedSince.toISOString(),
+                limit: limit,
                 opt_fields: 'gid,name,created_at,completed_at,parent'
             };
 
@@ -58,18 +67,18 @@ const getCompletedTasksForProject = async (workspaceGid, projectGid, days) => {
                 params.offset = offset;
             }
 
-            const tasks = await client.tasks.getTasks(params);
+            const result = await tasksApiInstance.getTasksForProject(projectGid, params);
 
-            const nonSubtasks = tasks.data.filter(task => task.parent === null);
+            const nonSubtasks = result.data.filter(task => task.parent === null);
             allTasks = allTasks.concat(nonSubtasks);
 
-            offset = tasks.next_page ? tasks.next_page.offset : null;
+            offset = result.next_page ? result.next_page.offset : null;
 
         } while (offset);
 
         return allTasks;
     } catch (error) {
-        console.error('Error fetching completed tasks:', error.value ? error.value.errors : error);
+        console.error('Error fetching completed tasks:', error.response ? error.response.body : error);
         throw error;
     }
 };
@@ -78,11 +87,13 @@ const getOpenTasksForProject = async (workspaceGid, projectGid) => {
     try {
         let allTasks = [];
         let offset = null;
+        const limit = 100; // Max limit per page
 
         do {
             const params = {
                 project: projectGid,
                 completed: false,
+                limit: limit,
                 opt_fields: 'gid,name,created_at,tags.name,parent'
             };
 
@@ -90,16 +101,16 @@ const getOpenTasksForProject = async (workspaceGid, projectGid) => {
                 params.offset = offset;
             }
 
-            const tasks = await client.tasks.getTasks(params);
+            const result = await tasksApiInstance.getTasksForProject(projectGid, params);
 
-            const nonSubtasks = tasks.data.filter(task => {
+            const nonSubtasks = result.data.filter(task => {
                 const isNotSubtask = task.parent === null;
                 const notOnHold = !task.tags.some(tag => tag.name === 'On Hold');
                 return isNotSubtask && notOnHold;
             });
 
             allTasks = allTasks.concat(nonSubtasks);
-            offset = tasks.next_page ? tasks.next_page.offset : null;
+            offset = result.next_page ? result.next_page.offset : null;
         } while (offset);
 
         // Sort tasks by creation date, oldest first
@@ -107,11 +118,10 @@ const getOpenTasksForProject = async (workspaceGid, projectGid) => {
 
         return allTasks;
     } catch (error) {
-        console.error('Error fetching open tasks:', error.value ? error.value.errors : error);
+        console.error('Error fetching open tasks:', error.response ? error.response.body : error);
         throw error;
     }
 };
-
 
 module.exports = {
     getWorkspaces,
