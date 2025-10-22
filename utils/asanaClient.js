@@ -29,15 +29,15 @@ async function getProjects(workspaceGid) {
   }
 }
 
-async function getCompletedTasks(workspaceGid) {
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+async function getCompletedTasks(workspaceGid, daysAgo = 30) {
+  const sinceDate = new Date();
+  sinceDate.setDate(sinceDate.getDate() - daysAgo);
 
   try {
     const response = await axios.get(`https://app.asana.com/api/1.0/workspaces/${workspaceGid}/tasks/search`, {
       headers: { Authorization: `Bearer ${process.env.ASANA_API_KEY}` },
       params: {
-        'completed_at.after': thirtyDaysAgo.toISOString(),
+        'completed_at.after': sinceDate.toISOString(),
         'sort_by': 'completed_at',
         'opt_fields': 'created_at,completed_at,name,projects'
       }

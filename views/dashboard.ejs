@@ -3,29 +3,52 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Productivity Dashboard</title>
+  <title>Efficiency Dashboard</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <header>
-    <h1>Productivity Dashboard</h1>
-  </header>
-  <main>
-    <section>
-      <h2>Projects</h2>
-      <div class="project-container">
-        <% if (projects && projects.length > 0) { %>
-          <% projects.forEach(project => { %>
-            <div class="project-card">
-              <h3><%= project.name %></h3>
-              <p>Average Lead Time: <%= project.avgLeadTime.toFixed(2) %> days</p>
-            </div>
-          <% }) %>
-        <% } else { %>
-          <p>No projects found.</p>
-        <% } %>
+  <div class="dashboard-container">
+    <header>
+      <div class="header-title">
+        <h1>Onboard Design: Efficiency Dashboard</h1>
+        <p class="subtitle">ONBOARD: MINI-BRIEF</p>
       </div>
-    </section>
-  </main>
+    </header>
+    <main>
+      <section class="turnaround-times">
+        <h2>TURNAROUND TIMES</h2>
+        <div class="projects-grid">
+          <% if (projects && projects.length > 0) { %>
+            <% projects.forEach(project => { %>
+              <div class="project-card">
+                <div class="card-header">
+                  <h3><%= project.name === "Josh's Workspace" ? "MY WORKSPACE" : project.name.toUpperCase() %></h3>
+                </div>
+                <div class="card-body">
+                  <div class="chart-container">
+                    <div class="progress-circle" data-value="<%= project.avgLeadTime.toFixed(0) %>">
+                      <div class="chart-title">30 DAY</div>
+                      <span class="progress-value"><%= project.avgLeadTime.toFixed(0) %></span>
+                      <span class="progress-label">DAYS</span>
+                    </div>
+                  </div>
+                  <div class="goal-text">
+                    <p>GOAL: 7 DAYS</p>
+                  </div>
+                </div>
+                <div class="card-footer">
+                  <canvas id="sparkline-<%= project.gid %>" class="sparkline-chart" data-history="<%= JSON.stringify(project.historicalData) %>"></canvas>
+                </div>
+              </div>
+            <% }) %>
+          <% } else { %>
+            <p>No projects found.</p>
+          <% } %>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/js/dashboard.js"></script>
 </body>
 </html>
