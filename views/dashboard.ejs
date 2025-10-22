@@ -20,9 +20,10 @@
         <div class="projects-grid">
           <% if (projects && projects.length > 0) { %>
             <% projects.forEach(project => { %>
-              <div class="project-card">
-                <div class="card-header">
-                  <h3><%= project.name === "Josh's Workspace" ? "MY WORKSPACE" : project.name.toUpperCase() %></h3>
+              <a href="/dashboard/project/<%= project.gid %>" class="project-card-link">
+                <div class="project-card">
+                  <div class="card-header">
+                    <h3><%= project.name === "Josh's Workspace" ? "MY WORKSPACE" : project.name.toUpperCase() %></h3>
                 </div>
                 <div class="card-body">
                   <div class="chart-container">
@@ -40,6 +41,7 @@
                   <canvas id="sparkline-<%= project.gid %>" class="sparkline-chart" data-history="<%= JSON.stringify(project.historicalData) %>"></canvas>
                 </div>
               </div>
+            </a>
             <% }) %>
           <% } else { %>
             <p>No projects found.</p>
