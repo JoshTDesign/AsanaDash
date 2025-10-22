@@ -11,10 +11,20 @@ router.get('/', async (req, res) => {
       return res.render('dashboard', { projects: [] });
     }
     const workspaceGid = workspaces[0].gid;
-    const [projects, completedTasks] = await Promise.all([
+    const [allProjects, completedTasks] = await Promise.all([
       getProjects(workspaceGid),
       getCompletedTasks(workspaceGid)
     ]);
+
+    const allowedProjectNames = [
+      "Onboard Mini Brief",
+      "Josh's Workspace",
+      "Entertainment",
+      "Revenue",
+      "Food & Beverage"
+    ];
+
+    const projects = allProjects.filter(project => allowedProjectNames.includes(project.name));
 
     const tasksByProject = completedTasks.reduce((acc, task) => {
       if (task.projects && task.projects.length > 0) {
