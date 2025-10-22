@@ -5,6 +5,7 @@ const express = require('express');
 const app = express();
 const path = require('path');
 const { getTasks } = require('./utils/asanaClient'); // Utility for Asana API calls
+const dashboardRoutes = require('./routes/dashboard');
 
 // Set up view engine and static files
 app.set('view engine', 'ejs');
@@ -21,6 +22,9 @@ app.get('/', async (req, res) => {
     res.status(500).send('An error occurred while fetching tasks.');
   }
 });
+
+// Use the dashboard route
+app.use('/dashboard', dashboardRoutes);
 
 // Start the server
 const port = process.env.PORT || 3000;
