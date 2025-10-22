@@ -196,3 +196,47 @@ header {
 .task-table tbody tr:last-child td {
     border-bottom: none;
 }
+
+.open-tasks-section {
+  padding: 1rem 1.5rem 1.5rem;
+  background-color: #FAFAFA;
+  border-top: 1px solid #E0E0E0;
+}
+
+.open-tasks-section h4 {
+  margin: 0 0 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #666;
+}
+
+.open-tasks-section ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.open-tasks-section li {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.open-tasks-section li:last-child {
+  margin-bottom: 0;
+}
+
+.task-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 1rem;
+}
+
+.task-age {
+  flex-shrink: 0;
+  font-weight: 600;
+}

@@ -40,6 +40,17 @@
                 <div class="card-footer">
                   <canvas id="sparkline-<%= project.gid %>" class="sparkline-chart" data-history="<%= JSON.stringify(project.historicalData) %>"></canvas>
                 </div>
+                <div class="open-tasks-section">
+                  <h4>OPEN TASKS</h4>
+                  <ul>
+                    <% project.openTasks.slice(0, 3).forEach(task => { %>
+                      <li>
+                        <span class="task-name"><%= task.name %></span>
+                        <span class="task-age"><%= task.ageInDays %> days</span>
+                      </li>
+                    <% }) %>
+                  </ul>
+                </div>
               </div>
             </a>
             <% }) %>
