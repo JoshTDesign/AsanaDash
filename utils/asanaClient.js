@@ -39,10 +39,10 @@ async function getCompletedTasks(workspaceGid, daysAgo = 30) {
       params: {
         'completed_at.after': sinceDate.toISOString(),
         'sort_by': 'completed_at',
-        'opt_fields': 'created_at,completed_at,name,projects'
+        'opt_fields': 'created_at,completed_at,name,projects,parent'
       }
     });
-    return response.data.data;
+    return response.data.data.filter(task => task.parent === null);
   } catch (error) {
     console.error(`Error fetching completed tasks for workspace ${workspaceGid}:`, error);
     throw error;
@@ -75,10 +75,10 @@ async function getCompletedTasksForProject(workspaceGid, projectGid, daysAgo = 3
                 'completed_at.after': sinceDate.toISOString(),
                 'projects.any': projectGid,
                 'sort_by': 'completed_at',
-                'opt_fields': 'created_at,completed_at,name'
+                'opt_fields': 'created_at,completed_at,name,parent'
             }
         });
-        return response.data.data;
+        return response.data.data.filter(task => task.parent === null);
     } catch (error) {
         console.error(`Error fetching completed tasks for project ${projectGid}:`, error);
         throw error;
