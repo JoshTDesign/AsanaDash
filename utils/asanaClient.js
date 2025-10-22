@@ -1,66 +1,122 @@
 require('dotenv').config();
-const axios = require('axios');
+const asana = require('asana');
 
-async function getTasks() {
-  console.log('Project ID in asanaClient:', process.env.PROJECT_ID);
+const client = asana.Client.create().useAccessToken(process.env.ASANA_API_KEY);
 
-  try {
-    const response = await axios.get('https://app.asana.com/api/1.0/tasks', {
-      headers: { Authorization: `Bearer ${process.env.ASANA_API_KEY}` },
-      params: {
-        project: process.env.PROJECT_ID,
-        opt_fields: 'name,due_on,memberships.project.gid,memberships.section.name,memberships.section.gid,gid' // Include project and section details
-      }
-    });
+const getWorkspaces = async () => {
+    try {
+        const workspaces = await client.workspaces.getWorkspaces();
+        return workspaces.data;
+    } catch (error) {
+        console.error('Error fetching workspaces:', error.value ? error.value.errors : error);
+        throw error;
+    }
+};
 
-    // Filter out tasks that have a "Done" membership or belong to "Complete" or "COMPLETED TASKS" sections
-    const targetProjectGid = '1207231923001575';
-    let tasks = response.data.data.filter(task => {
-      // Filter memberships based on the target project gid
-      task.memberships = task.memberships?.filter(membership =>
-        membership.project?.gid === targetProjectGid
-      ) || [];
+const getProjects = async (workspaceGid) => {
+    try {
+        const projects = await client.projects.getProjects({
+            workspace: workspaceGid,
+            opt_fields: 'gid,name'
+        });
+        return projects.data;
+    } catch (error) {
+        console.error('Error fetching projects:', error.value ? error.value.errors : error);
+        throw error;
+    }
+};
 
-      // Exclude tasks if any membership section name is "Done" or in "Complete" or "COMPLETED TASKS"
-      const hasDoneMembership = task.memberships.some(membership =>
-        ['done', 'complete', 'completed tasks'].includes(membership.section?.name.toLowerCase())
-      );
+const getProject = async (projectGid) => {
+    try {
+        const project = await client.projects.getProject(projectGid, {
+            opt_fields: 'gid,name'
+        });
+        return project;
+    } catch (error) {
+        console.error('Error fetching project:', error.value ? error.value.errors : error);
+        throw error;
+    }
+};
 
-      // Only include tasks that don't have a "Done", "Complete", or "COMPLETED TASKS" membership
-      return !hasDoneMembership;
-    });
 
-    // Categorize tasks
-    const today = new Date();
-    const endOfWeek = new Date(today);
-    endOfWeek.setDate(today.getDate() + (7 - today.getDay())); // End of the current week
+const getCompletedTasksForProject = async (workspaceGid, projectGid, days) => {
+    const completedSince = new Date();
+    completedSince.setDate(completedSince.getDate() - days);
 
-    const categorizedTasks = {
-      overdue: [],
-      thisWeek: [],
-      upcoming: [],
-      noDueDate: []
-    };
+    try {
+        let allTasks = [];
+        let offset = null;
 
-    tasks.forEach(task => {
-      const dueDate = task.due_on ? new Date(task.due_on) : null;
+        do {
+            const params = {
+                project: projectGid,
+                completed_since: completedSince.toISOString(),
+                opt_fields: 'gid,name,created_at,completed_at,parent'
+            };
 
-      if (!dueDate) {
-        categorizedTasks.noDueDate.push(task); // No due date
-      } else if (dueDate < today) {
-        categorizedTasks.overdue.push(task); // Overdue
-      } else if (dueDate <= endOfWeek) {
-        categorizedTasks.thisWeek.push(task); // Due this week
-      } else {
-        categorizedTasks.upcoming.push(task); // Due later
-      }
-    });
+            if (offset) {
+                params.offset = offset;
+            }
 
-    return categorizedTasks;
-  } catch (error) {
-    console.error('Error fetching tasks from Asana:', error);
-    throw error;
-  }
-}
+            const tasks = await client.tasks.getTasks(params);
 
-module.exports = { getTasks };
+            const nonSubtasks = tasks.data.filter(task => task.parent === null);
+            allTasks = allTasks.concat(nonSubtasks);
+
+            offset = tasks.next_page ? tasks.next_page.offset : null;
+
+        } while (offset);
+
+        return allTasks;
+    } catch (error) {
+        console.error('Error fetching completed tasks:', error.value ? error.value.errors : error);
+        throw error;
+    }
+};
+
+const getOpenTasksForProject = async (workspaceGid, projectGid) => {
+    try {
+        let allTasks = [];
+        let offset = null;
+
+        do {
+            const params = {
+                project: projectGid,
+                completed: false,
+                opt_fields: 'gid,name,created_at,tags.name,parent'
+            };
+
+            if (offset) {
+                params.offset = offset;
+            }
+
+            const tasks = await client.tasks.getTasks(params);
+
+            const nonSubtasks = tasks.data.filter(task => {
+                const isNotSubtask = task.parent === null;
+                const notOnHold = !task.tags.some(tag => tag.name === 'On Hold');
+                return isNotSubtask && notOnHold;
+            });
+
+            allTasks = allTasks.concat(nonSubtasks);
+            offset = tasks.next_page ? tasks.next_page.offset : null;
+        } while (offset);
+
+        // Sort tasks by creation date, oldest first
+        allTasks.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+        return allTasks;
+    } catch (error) {
+        console.error('Error fetching open tasks:', error.value ? error.value.errors : error);
+        throw error;
+    }
+};
+
+
+module.exports = {
+    getWorkspaces,
+    getProjects,
+    getProject,
+    getCompletedTasksForProject,
+    getOpenTasksForProject
+};
