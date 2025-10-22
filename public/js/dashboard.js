@@ -33,12 +33,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const sparklineCanvas = card.querySelector('.sparkline-chart');
     const historicalData = JSON.parse(sparklineCanvas.dataset.history);
 
+    // Generate date labels for the last 12 weeks
+    const today = new Date();
+    const labels = [];
+    for (let i = 11; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(today.getDate() - i * 7);
+        labels.push(date);
+    }
+
+    const dataWithDates = historicalData.map((value, index) => {
+        return { x: labels[index], y: value };
+    });
+
     new Chart(sparklineCanvas, {
       type: 'line',
       data: {
-        labels: historicalData.map((_, index) => index + 1),
         datasets: [{
-          data: historicalData,
+          data: dataWithDates,
           borderColor: color,
           borderWidth: 2,
           tension: 0.4,
@@ -49,7 +61,37 @@ document.addEventListener('DOMContentLoaded', () => {
         responsive: true,
         maintainAspectRatio: false,
         scales: {
-          x: { display: false },
+          x: {
+            type: 'time',
+            time: {
+              unit: 'week',
+              tooltipFormat: 'MMM d'
+            },
+            grid: {
+                display: false,
+                drawBorder: true,
+            },
+            ticks: {
+              display: true,
+              autoSkip: false,
+              maxRotation: 0,
+              callback: function(value, index, ticks) {
+                const date = new Date(this.getLabelForValue(value));
+                const prevDate = index > 0 ? new Date(this.getLabelForValue(ticks[index - 1].value)) : null;
+
+                if (index === 0 || (prevDate && date.getMonth() !== prevDate.getMonth())) {
+                  return date.toLocaleString('default', { month: 'short' });
+                }
+                return ''; // Return empty string for minor ticks
+              },
+              major: {
+                  enabled: true
+              },
+              font: {
+                  size: 10
+              }
+            }
+          },
           y: { display: false }
         },
         plugins: {
