@@ -1,68 +1,6 @@
 require('dotenv').config();
 const axios = require('axios');
 
-async function getTasks() {
-  console.log('Project ID in asanaClient:', process.env.PROJECT_ID);
-
-  try {
-    const response = await axios.get('https://app.asana.com/api/1.0/tasks', {
-      headers: { Authorization: `Bearer ${process.env.ASANA_API_KEY}` },
-      params: { 
-        project: process.env.PROJECT_ID,
-        opt_fields: 'name,due_on,memberships.project.gid,memberships.section.name,memberships.section.gid,gid' // Include project and section details
-      }
-    });
-    
-    // Filter out tasks that have a "Done" membership or belong to "Complete" or "COMPLETED TASKS" sections
-    const targetProjectGid = '1207231923001575';
-    let tasks = response.data.data.filter(task => {
-      // Filter memberships based on the target project gid
-      task.memberships = task.memberships?.filter(membership => 
-        membership.project?.gid === targetProjectGid
-      ) || [];
-
-      // Exclude tasks if any membership section name is "Done" or in "Complete" or "COMPLETED TASKS"
-      const hasDoneMembership = task.memberships.some(membership => 
-        ['done', 'complete', 'completed tasks'].includes(membership.section?.name.toLowerCase())
-      );
-
-      // Only include tasks that don't have a "Done", "Complete", or "COMPLETED TASKS" membership
-      return !hasDoneMembership;
-    });
-
-    // Categorize tasks
-    const today = new Date();
-    const endOfWeek = new Date(today);
-    endOfWeek.setDate(today.getDate() + (7 - today.getDay())); // End of the current week
-
-    const categorizedTasks = {
-      overdue: [],
-      thisWeek: [],
-      upcoming: [],
-      noDueDate: []
-    };
-
-    tasks.forEach(task => {
-      const dueDate = task.due_on ? new Date(task.due_on) : null;
-
-      if (!dueDate) {
-        categorizedTasks.noDueDate.push(task); // No due date
-      } else if (dueDate < today) {
-        categorizedTasks.overdue.push(task); // Overdue
-      } else if (dueDate <= endOfWeek) {
-        categorizedTasks.thisWeek.push(task); // Due this week
-      } else {
-        categorizedTasks.upcoming.push(task); // Due later
-      }
-    });
-
-    return categorizedTasks;
-  } catch (error) {
-    console.error('Error fetching tasks from Asana:', error);
-    throw error;
-  }
-}
-
 async function getWorkspaces() {
   try {
     const response = await axios.get('https://app.asana.com/api/1.0/workspaces', {
@@ -91,24 +29,60 @@ async function getProjects(workspaceGid) {
   }
 }
 
-async function getCompletedTasks(workspaceGid) {
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+async function getCompletedTasks(workspaceGid, daysAgo = 30) {
+  const sinceDate = new Date();
+  sinceDate.setDate(sinceDate.getDate() - daysAgo);
 
   try {
     const response = await axios.get(`https://app.asana.com/api/1.0/workspaces/${workspaceGid}/tasks/search`, {
       headers: { Authorization: `Bearer ${process.env.ASANA_API_KEY}` },
       params: {
-        'completed_at.after': thirtyDaysAgo.toISOString(),
+        'completed_at.after': sinceDate.toISOString(),
         'sort_by': 'completed_at',
-        'opt_fields': 'created_at,completed_at,name,projects'
+        'opt_fields': 'created_at,completed_at,name,projects,parent'
       }
     });
-    return response.data.data;
+    return response.data.data.filter(task => task.parent === null);
   } catch (error) {
     console.error(`Error fetching completed tasks for workspace ${workspaceGid}:`, error);
     throw error;
   }
 }
 
-module.exports = { getTasks, getWorkspaces, getProjects, getCompletedTasks };
+async function getProject(projectGid) {
+  try {
+    const response = await axios.get(`https://app.asana.com/api/1.0/projects/${projectGid}`, {
+      headers: { Authorization: `Bearer ${process.env.ASANA_API_KEY}` },
+      params: {
+        opt_fields: 'name'
+      }
+    });
+    return response.data.data;
+  } catch (error) {
+    console.error(`Error fetching project ${projectGid}:`, error);
+    throw error;
+  }
+}
+
+async function getCompletedTasksForProject(workspaceGid, projectGid, daysAgo = 30) {
+    const sinceDate = new Date();
+    sinceDate.setDate(sinceDate.getDate() - daysAgo);
+
+    try {
+        const response = await axios.get(`https://app.asana.com/api/1.0/workspaces/${workspaceGid}/tasks/search`, {
+            headers: { Authorization: `Bearer ${process.env.ASANA_API_KEY}` },
+            params: {
+                'completed_at.after': sinceDate.toISOString(),
+                'projects.any': projectGid,
+                'sort_by': 'completed_at',
+                'opt_fields': 'created_at,completed_at,name,parent'
+            }
+        });
+        return response.data.data.filter(task => task.parent === null);
+    } catch (error) {
+        console.error(`Error fetching completed tasks for project ${projectGid}:`, error);
+        throw error;
+    }
+}
+
+module.exports = { getWorkspaces, getProjects, getCompletedTasks, getProject, getCompletedTasksForProject };

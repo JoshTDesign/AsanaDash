@@ -15,6 +15,30 @@ function calculateAverageLeadTime(tasks) {
   return averageDays;
 }
 
+function calculateHistoricalLeadTime(tasks) {
+  const weeklyAverages = [];
+  const today = new Date();
+
+  // Calculate the 30-day average for the last 12 weeks (approx. 90 days)
+  for (let i = 0; i < 12; i++) {
+    const windowEnd = new Date(today);
+    windowEnd.setDate(today.getDate() - (i * 7));
+    const windowStart = new Date(windowEnd);
+    windowStart.setDate(windowEnd.getDate() - 30);
+
+    const tasksInWindow = tasks.filter(task => {
+      const completedAt = new Date(task.completed_at);
+      return completedAt >= windowStart && completedAt <= windowEnd;
+    });
+
+    const averageLeadTime = calculateAverageLeadTime(tasksInWindow);
+    weeklyAverages.push(averageLeadTime);
+  }
+
+  return weeklyAverages.reverse(); // Reverse to have the oldest data first
+}
+
 module.exports = {
   calculateAverageLeadTime,
+  calculateHistoricalLeadTime,
 };

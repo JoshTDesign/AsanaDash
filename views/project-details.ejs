@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= project.name %> - Task Details</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="details-container">
+        <header>
+            <div class="header-title">
+                <h1><%= project.name %></h1>
+                <p class="subtitle">Completed Tasks (Last 30 Days)</p>
+            </div>
+        </header>
+        <main>
+            <a href="/dashboard" class="back-link">&larr; Back to Dashboard</a>
+            <div class="task-table-container">
+                <table class="task-table">
+                    <thead>
+                        <tr>
+                            <th>Task Name</th>
+                            <th>Created On</th>
+                            <th>Completed On</th>
+                            <th>Lead Time (Days)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (tasks && tasks.length > 0) { %>
+                            <% tasks.forEach(task => { %>
+                                <tr>
+                                    <td><%= task.name %></td>
+                                    <td><%= new Date(task.created_at).toLocaleDateString() %></td>
+                                    <td><%= new Date(task.completed_at).toLocaleDateString() %></td>
+                                    <td><%= task.leadTime %></td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="4">No completed tasks found in the last 30 days.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
