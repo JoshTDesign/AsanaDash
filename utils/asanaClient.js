@@ -29,26 +29,6 @@ async function getProjects(workspaceGid) {
   }
 }
 
-async function getCompletedTasks(workspaceGid, daysAgo = 30) {
-  const sinceDate = new Date();
-  sinceDate.setDate(sinceDate.getDate() - daysAgo);
-
-  try {
-    const response = await axios.get(`https://app.asana.com/api/1.0/workspaces/${workspaceGid}/tasks/search`, {
-      headers: { Authorization: `Bearer ${process.env.ASANA_API_KEY}` },
-      params: {
-        'completed_at.after': sinceDate.toISOString(),
-        'sort_by': 'completed_at',
-        'opt_fields': 'created_at,completed_at,name,projects,parent'
-      }
-    });
-    return response.data.data.filter(task => task.parent === null);
-  } catch (error) {
-    console.error(`Error fetching completed tasks for workspace ${workspaceGid}:`, error);
-    throw error;
-  }
-}
-
 async function getProject(projectGid) {
   try {
     const response = await axios.get(`https://app.asana.com/api/1.0/projects/${projectGid}`, {
@@ -64,25 +44,45 @@ async function getProject(projectGid) {
   }
 }
 
+async function fetchAllCompletedTasks(url, allTasks = []) {
+    try {
+        const response = await axios.get(url, {
+            headers: { Authorization: `Bearer ${process.env.ASANA_API_KEY}` },
+        });
+        const tasks = response.data.data;
+        allTasks.push(...tasks);
+
+        if (response.data.next_page) {
+            return fetchAllCompletedTasks(response.data.next_page.uri, allTasks);
+        } else {
+            return allTasks;
+        }
+    } catch (error) {
+        console.error('Error during recursive task fetching:', error);
+        throw error;
+    }
+}
+
 async function getCompletedTasksForProject(workspaceGid, projectGid, daysAgo = 30) {
     const sinceDate = new Date();
     sinceDate.setDate(sinceDate.getDate() - daysAgo);
 
+    const params = new URLSearchParams({
+        'completed_at.after': sinceDate.toISOString(),
+        'projects.any': projectGid,
+        'sort_by': 'completed_at',
+        'opt_fields': 'created_at,completed_at,name,parent'
+    });
+
+    const initialUrl = `https://app.asana.com/api/1.0/workspaces/${workspaceGid}/tasks/search?${params.toString()}`;
+
     try {
-        const response = await axios.get(`https://app.asana.com/api/1.0/workspaces/${workspaceGid}/tasks/search`, {
-            headers: { Authorization: `Bearer ${process.env.ASANA_API_KEY}` },
-            params: {
-                'completed_at.after': sinceDate.toISOString(),
-                'projects.any': projectGid,
-                'sort_by': 'completed_at',
-                'opt_fields': 'created_at,completed_at,name,parent'
-            }
-        });
-        return response.data.data.filter(task => task.parent === null);
+        const allTasks = await fetchAllCompletedTasks(initialUrl);
+        return allTasks.filter(task => task.parent === null);
     } catch (error) {
         console.error(`Error fetching completed tasks for project ${projectGid}:`, error);
         throw error;
     }
 }
 
-module.exports = { getWorkspaces, getProjects, getCompletedTasks, getProject, getCompletedTasksForProject };
+module.exports = { getWorkspaces, getProjects, getProject, getCompletedTasksForProject };
