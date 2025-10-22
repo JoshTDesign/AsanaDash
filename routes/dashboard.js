@@ -17,11 +17,10 @@ router.get('/', async (req, res) => {
     ]);
 
     const allowedProjectNames = [
-      "Onboard Mini Brief",
-      "Josh's Workspace",
       "Entertainment",
-      "Revenue",
-      "Food & Beverage"
+      "Food & Beverage",
+      "MOM Workspace",
+      "Onboard Revenue"
     ];
 
     const projects = allProjects.filter(project => allowedProjectNames.includes(project.name));
