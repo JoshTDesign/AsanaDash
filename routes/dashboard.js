@@ -11,10 +11,7 @@ router.get('/', async (req, res) => {
       return res.render('dashboard', { projects: [] });
     }
     const workspaceGid = workspaces[0].gid;
-    const [allProjects, completedTasks] = await Promise.all([
-      getProjects(workspaceGid),
-      getCompletedTasks(workspaceGid, 120) // Fetch tasks from the last 120 days
-    ]);
+    const allProjects = await getProjects(workspaceGid);
 
     const allowedProjectNames = [
       "Entertainment",
@@ -23,34 +20,25 @@ router.get('/', async (req, res) => {
       "Onboard Revenue"
     ];
 
-    const projects = allProjects.filter(project => allowedProjectNames.includes(project.name));
+    const filteredProjects = allProjects.filter(project => allowedProjectNames.includes(project.name));
 
-    const tasksByProject = completedTasks.reduce((acc, task) => {
-      if (task.projects && task.projects.length > 0) {
-        task.projects.forEach(project => {
-          if (!acc[project.gid]) {
-            acc[project.gid] = [];
-          }
-          acc[project.gid].push(task);
-        });
-      }
-      return acc;
-    }, {});
+    const projectMetrics = await Promise.all(
+      filteredProjects.map(async (project) => {
+        const tasks = await getCompletedTasksForProject(workspaceGid, project.gid, 120);
 
-    const projectMetrics = projects.map((project) => {
-      const tasks = tasksByProject[project.gid] || [];
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      const recentTasks = tasks.filter(task => new Date(task.completed_at) >= thirtyDaysAgo);
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const recentTasks = tasks.filter(task => new Date(task.completed_at) >= thirtyDaysAgo);
 
-      const avgLeadTime = calculateAverageLeadTime(recentTasks);
-      const historicalData = calculateHistoricalLeadTime(tasks);
-      return {
-        ...project,
-        avgLeadTime,
-        historicalData,
-      };
-    });
+        const avgLeadTime = calculateAverageLeadTime(recentTasks);
+        const historicalData = calculateHistoricalLeadTime(tasks);
+        return {
+          ...project,
+          avgLeadTime,
+          historicalData,
+        };
+      })
+    );
 
     res.render('dashboard', { projects: projectMetrics });
   } catch (error) {
