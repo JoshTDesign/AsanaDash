@@ -58,6 +58,7 @@ const getCompletedTasksForProject = async (workspaceGid, projectGid, days) => {
         do {
             const params = {
                 project: projectGid,
+                completed: true,
                 completed_since: completedSince.toISOString(),
                 limit: limit,
                 opt_fields: 'gid,name,created_at,completed_at,parent'
