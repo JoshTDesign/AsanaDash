@@ -70,8 +70,8 @@ const getCompletedTasksForProject = async (workspaceGid, projectGid, days) => {
 
             const result = await tasksApiInstance.getTasksForProject(projectGid, params);
 
-            const nonSubtasks = result.data.filter(task => task.parent === null);
-            allTasks = allTasks.concat(nonSubtasks);
+            const validTasks = result.data.filter(task => task.parent === null && task.completed_at);
+            allTasks = allTasks.concat(validTasks);
 
             offset = result.next_page ? result.next_page.offset : null;
 
