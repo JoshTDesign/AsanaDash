@@ -29,12 +29,14 @@ router.get('/', async (req, res) => {
           getOpenTasksForProject(workspaceGid, project.gid)
         ]);
 
+        const validCompletedTasks = tasks.filter(t => t.completed_at);
+
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        const recentTasks = tasks.filter(task => new Date(task.completed_at) >= thirtyDaysAgo);
+        const recentTasks = validCompletedTasks.filter(task => new Date(task.completed_at) >= thirtyDaysAgo);
 
         const avgLeadTime = calculateAverageLeadTime(recentTasks);
-        const historicalData = calculateHistoricalLeadTime(tasks);
+        const historicalData = calculateHistoricalLeadTime(validCompletedTasks);
 
         const openTasksWithAge = openTasks.map(task => {
           const now = new Date();
@@ -74,7 +76,9 @@ router.get('/project/:projectGid', async (req, res) => {
             getCompletedTasksForProject(workspaceGid, projectGid, 30)
         ]);
 
-        const tasksWithLeadTime = tasks.map(task => {
+        const validTasks = tasks.filter(task => task.completed_at);
+
+        const tasksWithLeadTime = validTasks.map(task => {
             const leadTime = calculateAverageLeadTime([task]); // calculateAverageLeadTime works for a single task too
             return { ...task, leadTime: leadTime.toFixed(2) };
         });
