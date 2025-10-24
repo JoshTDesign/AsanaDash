@@ -29,12 +29,14 @@
                     <tbody>
                         <% if (tasks && tasks.length > 0) { %>
                             <% tasks.forEach(task => { %>
-                                <tr>
-                                    <td><%= task.name %></td>
-                                    <td><%= new Date(task.created_at).toLocaleDateString() %></td>
-                                    <td><%= new Date(task.completed_at).toLocaleDateString() %></td>
-                                    <td><%= task.leadTime %></td>
-                                </tr>
+                                <% if (task.completed_at) { %>
+                                    <tr>
+                                        <td><%= task.name %></td>
+                                        <td><%= new Date(task.created_at).toLocaleDateString() %></td>
+                                        <td><%= new Date(task.completed_at).toLocaleDateString() %></td>
+                                        <td><%= task.leadTime %></td>
+                                    </tr>
+                                <% } %>
                             <% }) %>
                         <% } else { %>
                             <tr>
